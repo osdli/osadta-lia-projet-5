@@ -9,12 +9,16 @@ public class FareCalculatorService {
         if( (ticket.getOutTime() == null) || (ticket.getOutTime().before(ticket.getInTime())) ){
             throw new IllegalArgumentException("Out time provided is incorrect:"+ticket.getOutTime().toString());
         }
+        
+        // Get the time when the ticket was entered
+        long inTime = ticket.getInTime().getTime();
 
-        int inHour = ticket.getInTime().getHours();
-        int outHour = ticket.getOutTime().getHours();
+        // Get the time when the ticket was exited
+        long outTime = ticket.getOutTime().getTime();
 
-        //TODO: Some tests are failing here. Need to check if this logic is correct
-        int duration = outHour - inHour;
+        // Calculate the duration of time between the ticket entry and exit times in hours
+        double duration = (double)(outTime - inTime) / (1000 * 60 * 60);
+
 
         switch (ticket.getParkingSpot().getParkingType()){
             case CAR: {
