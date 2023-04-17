@@ -6,6 +6,7 @@ import com.parkit.parkingsystem.model.Ticket;
 public class FareCalculatorService {
 
     public void calculateFare(Ticket ticket){
+      try {  
         if( (ticket.getOutTime() == null) || (ticket.getOutTime().before(ticket.getInTime())) ){
             throw new IllegalArgumentException("Out time provided is incorrect:"+ticket.getOutTime().toString());
         }
@@ -19,6 +20,10 @@ public class FareCalculatorService {
         // Calculate the duration of time between the ticket entry and exit times in hours
         double duration = (double)(outTime - inTime) / (1000 * 60 * 60);
 
+        if (duration < 0.5) {
+            ticket.setPrice(0);
+            return;
+        }
 
         switch (ticket.getParkingSpot().getParkingType()){
             case CAR: {
@@ -31,5 +36,9 @@ public class FareCalculatorService {
             }
             default: throw new IllegalArgumentException("Unkown Parking Type");
         }
+    } catch (Exception e) {
+        System.err.println("An error has occurred, please contact customer service: " + e.getMessage());
+        }
     }
 }
+    
