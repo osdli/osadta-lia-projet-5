@@ -29,9 +29,12 @@ public class ParkingService {
 
     public void processIncomingVehicle() {
         try{
+           // Get the next available parking spot
             ParkingSpot parkingSpot = getNextParkingNumberIfAvailable();
             if(parkingSpot !=null && parkingSpot.getId() > 0){
+              // Get the vehicle registration number
                 String vehicleRegNumber = getVehichleRegNumber();
+                // Mark the parking spot as unavailable
                 parkingSpot.setAvailable(false);
                 parkingSpotDAO.updateParking(parkingSpot);//allot this parking space and mark it's availability as false
 
@@ -64,7 +67,9 @@ public class ParkingService {
         int parkingNumber=0;
         ParkingSpot parkingSpot = null;
         try{
+            // Get the vehicle type
             ParkingType parkingType = getVehichleType();
+            // Get the next available parking spot
             parkingNumber = parkingSpotDAO.getNextAvailableSlot(parkingType);
             if(parkingNumber > 0){
                 parkingSpot = new ParkingSpot(parkingNumber,parkingType, true);
@@ -100,13 +105,16 @@ public class ParkingService {
 
     public void processExitingVehicle() {
         try{
+            // Get the vehicle registration number
             String vehicleRegNumber = getVehichleRegNumber();
+            // Get the ticket associated with the vehicle
             Ticket ticket = ticketDAO.getTicket(vehicleRegNumber);
             Date outTime = new Date();
             ticket.setOutTime(outTime);
 
             int nbTickets = ticketDAO.getNbTicket(vehicleRegNumber);
             boolean discount = nbTickets > 1;
+            // Calculate the parking fare
             fareCalculatorService.calculateFare(ticket, discount);
 
             if(ticketDAO.updateTicket(ticket)) {

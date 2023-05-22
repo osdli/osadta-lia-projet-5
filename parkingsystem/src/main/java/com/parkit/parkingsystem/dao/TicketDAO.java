@@ -91,7 +91,7 @@ public int getNbTicket(String vehicleRegNumber) {
     int nbTicket = 0;
     try {
         con = dataBaseConfig.getConnection();
-        PreparedStatement ps = con.prepareStatement(DBConstants.GET_NB_TICKET);
+        PreparedStatement ps = con.prepareStatement(DBConstants.GET_TICKET);
         ps.setString(1, vehicleRegNumber);
         ResultSet rs = ps.executeQuery();
         if (rs.next()) {
