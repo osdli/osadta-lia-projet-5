@@ -42,7 +42,7 @@ public class ParkingServiceTest {
             parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
         } catch (Exception e) {
             e.printStackTrace();
-            throw  new RuntimeException("Failed to set up test mock objects");
+            throw new RuntimeException("Failed to set up test mock objects");
         }
     }
     @Test
@@ -55,27 +55,34 @@ public class ParkingServiceTest {
     
     @Test
     public void testProcessIncomingVehicle() {
+        //Given
         Mockito.lenient().when(inputReaderUtil.readSelection()).thenReturn(1);
         Mockito.lenient().when(parkingSpotDAO.getNextAvailableSlot(any(ParkingType.class))).thenReturn(1);
         Mockito.lenient().when(parkingSpotDAO.updateParking(any(ParkingSpot.class))).thenReturn(false);
-        
+        //When
         parkingService.processIncomingVehicle();
         verify(parkingSpotDAO, Mockito.times(1)).updateParking(any(ParkingSpot.class));
         verify(ticketDAO, Mockito.times(1)).saveTicket(any(Ticket.class));
     }
     @Test
     public void processExitingVehicleTestUnableUpdate() {
+        //Given
         Mockito.lenient().when(ticketDAO.updateTicket(any(Ticket.class))).thenReturn(false);
+        //When
         parkingService.processExitingVehicle();
+        //Then
         verify(parkingSpotDAO, Mockito.times(0)).updateParking(any(ParkingSpot.class));
         verify(ticketDAO, Mockito.times(1)).getNbTicket(anyString());
     }
     @Test
     public void testGetNextParkingNumberIfAvailable() {
+        //Given
         ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.CAR, true);
         Mockito.lenient().when(inputReaderUtil.readSelection()).thenReturn(1);
         Mockito.lenient().when(parkingSpotDAO.getNextAvailableSlot(any(ParkingType.class))).thenReturn(1);
+        //When
         ParkingSpot result = parkingService.getNextParkingNumberIfAvailable();
+        //Then
         verify(parkingSpotDAO, times(1)).getNextAvailableSlot(any(ParkingType.class));
         assertEquals(parkingSpot.getId(), result.getId());
     }
