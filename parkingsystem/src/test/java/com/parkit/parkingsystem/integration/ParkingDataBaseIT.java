@@ -68,36 +68,10 @@ public class ParkingDataBaseIT {
     assertNull(ticket.getOutTime(), "Out time should be null at parking");
   }
 
-  @Test
-  public void testParkingLotExit() {
-    testParkingACar();
+@Test
+public void testParkingLotExit() {
     ParkingService parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
-    // Wait for some time to simulate parking duration
-    try {
-      TimeUnit.SECONDS.sleep(5);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-    parkingService.processExitingVehicle();
-    // Check that the fare generated and out time are populated correctly in the database
-    Ticket ticket = ticketDAO.getTicket("ABCDEF");
-    assertNotNull(ticket, "Ticket should not be null");
-    assertEquals("ABCDEF", ticket.getVehicleRegNumber(), "Vehicle registration number should match the input");
-    assertNotNull(ticket.getPrice(), "Price should not be null");
-    assertNotNull(ticket.getInTime(), "In time should not be null");
-    assertNotNull(ticket.getOutTime(), "Out time should not be null");
-  }
-
-  @Test
-  public void testParkingLotExitRecurringUser() throws Exception {
-    // Park the vehicle for the first time
-    ParkingService parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
-    parkingService.processIncomingVehicle();
-
-    // Reset the input reader to create a new ticket for the same vehicle
-    // when(inputReaderUtil.readSelection()).thenReturn(1);
-    // when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn("ABCDEF");
-
+    // Set the in time to a previous time to simulate parking duration
     ParkingSpot parkingSpot = parkingService.getNextParkingNumberIfAvailable();
     Date inTimeCar = new Date(System.currentTimeMillis() - (60 * 60 * 1000));
     Ticket ticket = new Ticket();
@@ -105,29 +79,44 @@ public class ParkingDataBaseIT {
     ticket.setVehicleRegNumber("ABCDEF");
     ticket.setParkingSpot(parkingSpot);
     ticketDAO.saveTicket(ticket);
-
     parkingService.processExitingVehicle();
-
-    // Simulate vehicle exit after some time
-    Date outTimeCar = new Date(System.currentTimeMillis() - (30 * 60 * 1000)); // Exit after 30 minutes
-    ticket.setOutTime(outTimeCar);
-    FareCalculatorService fareCalculatorService = new FareCalculatorService();
-    fareCalculatorService.calculateFare(ticket);
-    ticketDAO.updateTicket(ticket);
-
+    // Check that the fare generated and out time are populated correctly in the database
+    Ticket updatedTicket = ticketDAO.getTicket("ABCDEF");
+    assertNotNull(updatedTicket, "Ticket should not be null");
+    assertEquals("ABCDEF", updatedTicket.getVehicleRegNumber(), "Vehicle registration number should match the input");
+    assertNotNull(updatedTicket.getPrice(), "Price should not be null");
+    assertNotNull(updatedTicket.getInTime(), "In time should not be null");
+    assertNotNull(updatedTicket.getOutTime(), "Out time should not be null");
+    // Calculate the duration of time between the ticket entry and exit times in hours
+    long durationMillis = updatedTicket.getOutTime().getTime() - updatedTicket.getInTime().getTime();
+    double durationHours = durationMillis / (1000.0 * 60.0 * 60.0);
+    // Check that the ticket price is equal to the duration * rate per hour for car * 95%
+    double expectedPrice = durationHours * Fare.CAR_RATE_PER_HOUR;
+    double actualPrice = updatedTicket.getPrice();
+    assertEquals(expectedPrice, actualPrice, 0.01, "The ticket price should match the expected price");
+}
+  @Test
+  public void testParkingLotExitRecurringUser() throws Exception {
+    // Park the vehicle for the first time
+    ParkingService parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
+    parkingService.processIncomingVehicle();
+    ParkingSpot parkingSpot = parkingService.getNextParkingNumberIfAvailable();
+    Date inTimeCar = new Date(System.currentTimeMillis() - (60 * 60 * 1000));
+    Ticket ticket = new Ticket();
+    ticket.setInTime(inTimeCar);
+    ticket.setVehicleRegNumber("ABCDEF");
+    ticket.setParkingSpot(parkingSpot);
+    ticketDAO.saveTicket(ticket);
+    parkingService.processExitingVehicle();
     // Check the price for the exiting ticket
     Ticket ticketRetrieve = ticketDAO.getTicket("ABCDEF");
-
-    // Calculate the duration of time between the ticket entry and exit times in hours
-    long durationMillis = ticketRetrieve.getOutTime().getTime() - ticketRetrieve.getInTime().getTime();
-    double durationHours = durationMillis / (1000.0 * 60.0 * 60.0);
-
-    // Check that the ticket price is equal to 1 hour * rate per hour for car * 95% == ticketRetrieve.getPrice()
-    double expectedPrice = durationHours * Fare.CAR_RATE_PER_HOUR * 0.95;
-    double actualPrice = ticketRetrieve.getPrice();
-    assertEquals(expectedPrice, actualPrice, 0.01, "The ticket price should match the expected price");
     // Check that the number of tickets retrieved for the same vehicle ('ABCDEF') is greater than 1
     int ticketCount = ticketDAO.getNbTicket("ABCDEF");
     assertTrue(ticketCount > 1, "The number of tickets retrieved for the same vehicle should be greater than 1");
+  
+    // Check that the ticket price is equal to 1 hour * rate per hour for car * 95% == ticketRetrieve.getPrice()
+    double expectedPrice = 1 * Fare.CAR_RATE_PER_HOUR * 0.95;
+    double actualPrice = ticketRetrieve.getPrice();
+    assertEquals(expectedPrice, actualPrice, 0.01, "The ticket price should match the expected price");
   }
 }
