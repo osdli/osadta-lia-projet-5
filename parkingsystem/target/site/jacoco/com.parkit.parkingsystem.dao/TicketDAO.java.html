@@ -34,9 +34,9 @@ import java.sql.Timestamp;
 <span class="fc" id="L34">            return ps.execute();</span>
 <span class="nc" id="L35">        }catch (Exception ex){</span>
 <span class="nc" id="L36">            logger.error(&quot;Error fetching next available slot&quot;,ex);</span>
-<span class="nc" id="L37">        }finally {</span>
-<span class="fc" id="L38">            dataBaseConfig.closeConnection(con);</span>
-<span class="fc" id="L39">            return false;</span>
+        }finally {
+<span class="pc" id="L38">            dataBaseConfig.closeConnection(con);</span>
+<span class="pc" id="L39">            return false;</span>
         }
     }
 
@@ -61,11 +61,11 @@ import java.sql.Timestamp;
             }
 <span class="fc" id="L62">            dataBaseConfig.closeResultSet(rs);</span>
 <span class="fc" id="L63">            dataBaseConfig.closePreparedStatement(ps);</span>
-<span class="pc" id="L64">        }catch (Exception ex){</span>
+<span class="nc" id="L64">        }catch (Exception ex){</span>
 <span class="nc" id="L65">            logger.error(&quot;Error fetching next available slot&quot;,ex);</span>
-<span class="nc" id="L66">        }finally {</span>
-<span class="fc" id="L67">            dataBaseConfig.closeConnection(con);</span>
-<span class="fc" id="L68">            return ticket;</span>
+        }finally {
+<span class="pc" id="L67">            dataBaseConfig.closeConnection(con);</span>
+<span class="pc" id="L68">            return ticket;</span>
         }
     }
 
@@ -86,5 +86,25 @@ import java.sql.Timestamp;
         }
 <span class="nc" id="L87">        return false;</span>
     }
+public int getNbTicket(String vehicleRegNumber) {
+<span class="fc" id="L90">    Connection con = null;</span>
+<span class="fc" id="L91">    int nbTicket = 0;</span>
+    try {
+<span class="fc" id="L93">        con = dataBaseConfig.getConnection();</span>
+<span class="fc" id="L94">        PreparedStatement ps = con.prepareStatement(DBConstants.GET_TICKET);</span>
+<span class="fc" id="L95">        ps.setString(1, vehicleRegNumber);</span>
+<span class="fc" id="L96">        ResultSet rs = ps.executeQuery();</span>
+<span class="pc bpc" id="L97" title="1 of 2 branches missed.">        if (rs.next()) {</span>
+<span class="fc" id="L98">            nbTicket = rs.getInt(1);</span>
+        }
+<span class="fc" id="L100">        dataBaseConfig.closeResultSet(rs);</span>
+<span class="fc" id="L101">        dataBaseConfig.closePreparedStatement(ps);</span>
+<span class="nc" id="L102">    } catch (Exception ex) {</span>
+<span class="nc" id="L103">        logger.error(&quot;Error fetching number of tickets for vehicleRegNumber: {}&quot;, vehicleRegNumber, ex);</span>
+    } finally {
+<span class="fc" id="L105">        dataBaseConfig.closeConnection(con);</span>
+    }
+<span class="fc" id="L107">    return nbTicket;</span>
+}
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
